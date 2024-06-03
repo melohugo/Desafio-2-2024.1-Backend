@@ -1,0 +1,126 @@
+-- -------- < detran > --------
+--
+--                    SCRIPT DE CRIACAO (DDL)
+--
+-- Data Criacao ...........: 03/06/2024
+-- Autor(es) ..............: Hugo Queiroz Camelo de Melo
+-- Banco de Dados .........: MySQL 8.0
+-- Base de Dados (nome) ...: detran
+--
+-- PROJETO => 01 Base de Dados
+--         => 09 Tabelas
+-- 
+-- Ultimas Alteracoes
+--
+-- ---------------------------------------------------------
+
+
+CREATE DATABASE
+IF NOT EXISTS detran;
+
+USE detran;
+
+CREATE TABLE CATEGORIA (
+    idCategoria DECIMAL(2) NOT NULL,
+    categoria VARCHAR(30) NOT NULL,
+    CONSTRAINT CATEGORIA_PK PRIMARY KEY (idCategoria)
+) ENGINE InnoDB;
+
+CREATE TABLE MODELO (
+    idModelo DECIMAL(6) NOT NULL,
+    modelo VARCHAR(30) NOT NULL,
+    CONSTRAINT MODELO_PK PRIMARY KEY (idModelo)
+) ENGINE InnoDB;
+
+CREATE TABLE TIPOINFRACAO (
+    idTipo DECIMAL(9) NOT NULL,
+    descricao VARCHAR(50) NOT NULL,
+    valor DECIMAL(6,2) NOT NULL,
+    CONSTRAINT TIPOINFRACAO_PK PRIMARY KEY (idTipo),
+    CONSTRAINT TIPOINFRACAO_UK UNIQUE(descricao)
+) ENGINE InnoDB;
+
+CREATE TABLE LOCAL (
+    idLocal DECIMAL(9) NOT NULL,
+    longitude DECIMAL(5,2) NOT NULL,
+    latitude DECIMAL(5,2) NOT NULL,
+    CONSTRAINT LOCAL_PK PRIMARY KEY (idLocal),
+    CONSTRAINT LOCAL_UK UNIQUE (longitude, latitude)
+) ENGINE InnoDB;
+
+CREATE TABLE AGENTE (
+    matricula DECIMAL(9) NOT NULL,
+    nome VARCHAR(30) NOT NULL,
+    dtContratacao DATE NOT NULL,
+    CONSTRAINT AGENTE_PK PRIMARY KEY (matricula)
+) ENGINE InnoDB;
+
+CREATE TABLE PROPRIETARIO (
+    cpf VARCHAR(11) NOT NULL,
+    nome VARCHAR(50) NOT NULL,
+    bairro VARCHAR(30) NOT NULL,
+    cidade VARCHAR(30) NOT NULL,
+    estado VARCHAR(30) NOT NULL,
+    sexo CHAR(1) NOT NULL,
+    dtNascimento DATE NOT NULL,
+    CONSTRAINT PROPRIETARIO_PK PRIMARY KEY (cpf)
+);
+
+CREATE TABLE telefone (
+    cpf VARCHAR(11) NOT NULL,
+    telefone VARCHAR(8) NOT NULL,
+    CONSTRAINT telefone_UK UNIQUE (cpf, telefone),
+    CONSTRAINT telefone_PROPRIETARIO_FK FOREIGN KEY (cpf)
+    REFERENCES PROPRIETARIO (cpf)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE VEICULO (
+    placa VARCHAR(7) NOT NULL,
+    chassi VARCHAR(17) NOT NULL,
+    cor VARCHAR(15) NOT NULL,
+    idCategoria DECIMAL(2) NOT NULL,
+    idModelo DECIMAL(6) NOT NULL,
+    cpf VARCHAR(11) NOT NULL,
+    CONSTRAINT VEICULO_PK PRIMARY KEY (placa),
+    CONSTRAINT VEICULO_UK UNIQUE (chassi),
+    CONSTRAINT VEICULO_CATEGORIA_FK FOREIGN KEY (idCategoria)
+    REFERENCES CATEGORIA (idCategoria)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    CONSTRAINT VEICULO_MODELO_FK FOREIGN KEY (idModelo)
+    REFERENCES MODELO (idModelo)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    CONSTRAINT VEICULO_PROPRIETARIO_FK FOREIGN KEY (cpf)
+    REFERENCES PROPRIETARIO (cpf)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE INFRACAO (
+    dtHora TIMESTAMP NOT NULL,
+    matriculaAgente DECIMAL(9) NOT NULL,
+    idLocal DECIMAL(9) NOT NULL,
+    idTipo DECIMAL(9) NOT NULL,
+    placa VARCHAR(7) NOT NULL,
+    velocidade DECIMAL(3),
+    CONSTRAINT INFRACAO_PK PRIMARY KEY (dtHora, placa, idTipo),
+    CONSTRAINT INFRACAO_AGENTE_FK FOREIGN KEY (matriculaAgente)
+    REFERENCES AGENTE (matricula)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    CONSTRAINT INFRACAO_LOCAL_FK FOREIGN KEY (idLocal)
+    REFERENCES LOCAL (idLocal)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    CONSTRAINT INFRACAO_TIPOINFRACAO_FK FOREIGN KEY (idTipo)
+    REFERENCES TIPOINFRACAO (idTipo)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    CONSTRAINT INFRACAO_VEICULO_FK FOREIGN KEY (placa)
+    REFERENCES VEICULO (placa)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
